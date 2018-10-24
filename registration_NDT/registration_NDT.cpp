@@ -50,7 +50,7 @@ typedef typename pcl::Feature<PointL, FPFHSignature33>::Ptr FeatureEstimatorPtr;
 typedef boost::shared_ptr<const pcl::PointRepresentation <FPFHSignature33> > FeatureRepresentationConstPtr;
 
 // globals
-int anzahlClouds = 3;
+int anzahlClouds = 4;
 bool NormalDistributionTrans = false;
 bool IterativeClosestPoints = true;
 bool LeafnodeIterator = true;
@@ -356,7 +356,7 @@ void registerICP(const PointCloud<PointL>::Ptr cloud_src, const PointCloud<Point
 		transformPointCloud(*cloud_tgt, *output, targetToSource);
 		*output += *cloud_src;
 
-		/*if (i = 0 || 10 || 20) {
+		/*if (i = 5 || 10 || 20) {
 			std::stringstream ss;
 			ss << "registrationTry" << i << ".ply";
 			savePLYFile(ss.str(), *output, true);
@@ -529,14 +529,14 @@ int main(int argc, char** argv)
 		savePLYFile(ss3.str(), *result12, true);
 
 		// ergebnis erste registrierung wird neue src cloud
-		registerICP(result12, cloudLabel2, result12Transform, corrFiltered, result123, result123Transform);
+		registerICP(result12, cloudLabel3, result12Transform, corrFiltered, result123, result123Transform);
 
 		std::stringstream ss4;
 		ss4 << "registration123.ply";
 		savePLYFile(ss4.str(), *result123, true);
 
 		// ergebnis zweite registrierung wird neue src cloud
-		registerICP(result123, cloudLabel2, result123Transform, corrFiltered, result1234, result1234Transform);
+		registerICP(result123, cloudLabel4, result123Transform, corrFiltered, result1234, result1234Transform);
 
 		std::stringstream ss5;
 		ss5 << "registration1234.ply";
