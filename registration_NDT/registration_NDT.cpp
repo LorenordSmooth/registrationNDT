@@ -50,7 +50,7 @@ typedef typename pcl::Feature<PointL, FPFHSignature33>::Ptr FeatureEstimatorPtr;
 typedef boost::shared_ptr<const pcl::PointRepresentation <FPFHSignature33> > FeatureRepresentationConstPtr;
 
 // globals
-int anzahlClouds = 4;
+int anzahlClouds = 1;
 int anzahlIterationen = 30;
 bool NormalDistributionTrans = false;
 bool IterativeClosestPoints = true;
@@ -604,10 +604,47 @@ int main(int argc, char** argv)
 	else
 	{
 		copyPointCloud(*cloud1, *result1234);
-		cout << "label aus reg wolke 5: " << result1234->points[5].label << endl;
-		cout << "label aus reg wolke 356: " << result1234->points[356].label << endl;
-		cout << "label aus reg wolke 36363: " << result1234->points[36363].label << endl;
-		cout << "label aus reg wolke 123: " << result1234->points[123].label << endl;
+		/*for (int i = 0; i < 30000; ++i)
+		{
+			cout << "farbe aus reg wolke: " << result1234->points[i].rgb << endl;
+		}*/
+
+		/*uint8_t r1 = 255, g1 = 0, b1 = 0;
+		uint32_t rgb1 = ((uint32_t)r1 << 16 | (uint32_t)g1 << 8 | (uint32_t)b1);
+		uint8_t r2 = 0, g2 = 255, b2 = 0;
+		uint32_t rgb2 = ((uint32_t)r2 << 16 | (uint32_t)g2 << 8 | (uint32_t)b2);
+		uint8_t r3 = 0, g3 = 0, b3 = 255;
+		uint32_t rgb3 = ((uint32_t)r3 << 16 | (uint32_t)g3 << 8 | (uint32_t)b3);
+		uint8_t r4 = 255, g4 = 255, b4 = 0;
+		uint32_t rgb4 = ((uint32_t)r4 << 16 | (uint32_t)g4 << 8 | (uint32_t)b4);
+		uint8_t r5 = 255, g5 = 0, b5 = 255;
+		uint32_t rgb5 = ((uint32_t)r5 << 16 | (uint32_t)g5 << 8 | (uint32_t)b5);*/
+
+		/*for (size_t i = 0; i < result1234->points.size(); ++i) {
+			switch (result1234->points[i].label) {
+			case 1: {
+				cloudFilteredFarbig->points[i].rgb = *reinterpret_cast<float*>(&rgb1);
+				break;
+			}
+			case 2: {
+				cloudFilteredFarbig->points[i].rgb = *reinterpret_cast<float*>(&rgb2);
+				break;
+			}
+			case 3: {
+				cloudFilteredFarbig->points[i].rgb = *reinterpret_cast<float*>(&rgb3);
+				break;
+			}
+			case 4: {
+				cloudFilteredFarbig->points[i].rgb = *reinterpret_cast<float*>(&rgb4);
+				break;
+			}
+			case 5: {
+				cloudFilteredFarbig->points[i].rgb = *reinterpret_cast<float*>(&rgb5);
+				break;
+			}
+			}
+		}*/
+
 	}
 
 	PointCloud<PointXYZRGBL>::Ptr cloudMergedFarbig(new PointCloud<PointXYZRGBL>());
