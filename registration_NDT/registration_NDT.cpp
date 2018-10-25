@@ -51,9 +51,11 @@ typedef boost::shared_ptr<const pcl::PointRepresentation <FPFHSignature33> > Fea
 
 // globals
 int anzahlClouds = 4;
+int anzahlIterationen = 30;
 bool NormalDistributionTrans = false;
 bool IterativeClosestPoints = true;
 bool LeafnodeIterator = true;
+bool registrierungFertig = false;
 
 int ladeClouds(int argc, char** argv, vector<PointCloud<PointT>::Ptr, 
 	Eigen::aligned_allocator<PointCloud<PointT>::Ptr>> &sourceClouds)
@@ -264,7 +266,7 @@ void registerICP2(const PointCloud<PointL>::Ptr cloud_src, const PointCloud<Poin
 }
 
 // input: 1.src, 2.tgt, 3.startTraffo, 4.start?corresp, 5.resultat der methode, 6.resultat der traffo dieser methode als zwischenergebnis
-void registerICP(const PointCloud<PointL>::Ptr cloud_src, const PointCloud<PointL>::Ptr cloud_tgt, 
+void registerICP(const PointCloud<PointL>::Ptr cloud_src, const PointCloud<PointL>::Ptr cloud_tgt,
 	Eigen::Matrix4f transformInitial,
 	const CorrespondencesPtr corresps_filtered, PointCloud<PointL>::Ptr output, Eigen::Matrix4f &finalTransform)
 {
@@ -317,7 +319,7 @@ void registerICP(const PointCloud<PointL>::Ptr cloud_src, const PointCloud<Point
 	// interne maxIterationen stark limitieren, sorgt für erhöhte kontrolle
 	reg.setMaximumIterations(2);
 	// hier manuell dafür großer loop
-	for (int i = 0; i < 30; ++i)
+	for (int i = 0; i < anzahlIterationen; ++i)
 	{
 		cout << i << endl;
 		// temp src speichern
@@ -380,18 +382,28 @@ void registerICP(const PointCloud<PointL>::Ptr cloud_src, const PointCloud<Point
 
 int main(int argc, char** argv)
 {
+	// Base Clouds
 	PointCloud<PointT>::Ptr cloud1(new PointCloud<PointT>());
 	PointCloud<PointT>::Ptr cloud2(new PointCloud<PointT>());
 	PointCloud<PointT>::Ptr cloud3(new PointCloud<PointT>());
 	PointCloud<PointT>::Ptr cloud4(new PointCloud<PointT>());
 	PointCloud<PointT>::Ptr cloud5(new PointCloud<PointT>());
+	// Clouds mit Label
 	PointCloud<PointL>::Ptr cloudLabel1(new PointCloud<PointL>());
 	PointCloud<PointL>::Ptr cloudLabel2(new PointCloud<PointL>());
 	PointCloud<PointL>::Ptr cloudLabel3(new PointCloud<PointL>());
 	PointCloud<PointL>::Ptr cloudLabel4(new PointCloud<PointL>());
 	PointCloud<PointL>::Ptr cloudLabel5(new PointCloud<PointL>());
+	// Clouds mit Label in RotBlauGruenGelb Darstellung
 	PointCloud<PointL>::Ptr cloudLabelRB1(new PointCloud<PointL>());
 	PointCloud<PointL>::Ptr cloudLabelRB2(new PointCloud<PointL>());
+	PointCloud<PointL>::Ptr cloudLabelRB3(new PointCloud<PointL>());
+	PointCloud<PointL>::Ptr cloudLabelRB4(new PointCloud<PointL>());
+	PointCloud<PointL>::Ptr cloudLabelRB5(new PointCloud<PointL>());
+	// resultat der registrierung von cloud 1&2&3&4
+	PointCloud<PointL>::Ptr result12(new PointCloud<PointL>());
+	PointCloud<PointL>::Ptr result123(new PointCloud<PointL>());
+	PointCloud<PointL>::Ptr result1234(new PointCloud<PointL>());
 
 	// lade die clouds in einen vector von clouds
 	vector<PointCloud<PointT>::Ptr, Eigen::aligned_allocator<PointCloud<PointT>::Ptr>> clouds;
@@ -399,6 +411,12 @@ int main(int argc, char** argv)
 
 	// initialisiere die arbeits clouds (uebersichtlicher)
 	switch (anzahlClouds) {
+		case 1: {
+			*cloud1 = *clouds[0];
+			// wenn wir nur eine Cloud laden, ist dies die bereits fertig registrierte
+			registrierungFertig = true;
+			break;
+		}
 		case 2: {
 			*cloud1 = *clouds[0];
 			*cloud2 = *clouds[1];
@@ -427,186 +445,195 @@ int main(int argc, char** argv)
 		}
 	}
 
-	cout << "vor pointcloud copy shiet" << endl;
-	// temporaer: konvertiere zwei (beliebige) eingelesenen Clouds in (neue) XYZRGBL Clouds
-	copyPointCloud(*cloud1, *cloudLabel1);
-	copyPointCloud(*cloud2, *cloudLabel2);
-	copyPointCloud(*cloud3, *cloudLabel3);
-	copyPointCloud(*cloud4, *cloudLabel4);
-	copyPointCloud(*cloud5, *cloudLabel5);
-	cout << "Nach pointcloud copy shiet" << endl;
-
-	// Initialisiere RotBlau Clouds
-	//*cloudLabelRB1 = *cloudLabel1;
-	//*cloudLabelRB2 = *cloudLabel2;
-
-	//*cloud2 = *cloud2 + *cloud1;
-
-	//std::stringstream ss2;
-	//ss2 << "wadisura2part1pluspart2.ply";
-	//savePLYFile(ss2.str(), *cloud2, true);
-
-	// Iteriere ueber die Clouds 1,2,3 usw. und gebe jedem Punkt jeweils Labels 1 bzw. 2, 3 usw.
-	/*for (int i = 0; i < anzahlClouds; ++i)
+	// wenn registrierungFertig true, ueberspringe das Labeln und die RegistrierungsMethoden, direkt zu LeafIter
+	if (!registrierungFertig)
 	{
-		uint32_t label = i;
+
+		cout << "vor pointcloud copy shiet" << endl;
+		// temporaer: konvertiere zwei (beliebige) eingelesenen Clouds in (neue) XYZRGBL Clouds
+		copyPointCloud(*cloud1, *cloudLabel1);
+		copyPointCloud(*cloud2, *cloudLabel2);
+		copyPointCloud(*cloud3, *cloudLabel3);
+		copyPointCloud(*cloud4, *cloudLabel4);
+		copyPointCloud(*cloud5, *cloudLabel5);
+		cout << "Nach pointcloud copy shiet" << endl;
+
+		// Initialisiere RotBlau Clouds
+		*cloudLabelRB1 = *cloudLabel1;
+		*cloudLabelRB2 = *cloudLabel2;
+		*cloudLabelRB3 = *cloudLabel3;
+		*cloudLabelRB4 = *cloudLabel4;
+		*cloudLabelRB5 = *cloudLabel5;
+
+		// Initialisiere Label
+		uint32_t label1 = 1;
+		uint32_t label2 = 2;
+		uint32_t label3 = 3;
+		uint32_t label4 = 4;
+		uint32_t label5 = 5;
+
+		cout << "vor pointcloud label shiet" << endl;
 		for (auto &p1 : cloudLabel1->points) {
-			p1.label = label;
+			p1.label = label1;
 		}
-	}*/
-	uint32_t label1 = 1;
-	uint32_t label2 = 2;
-	uint32_t label3 = 3;
-	uint32_t label4 = 4;
-	uint32_t label5 = 5;
+		for (auto &p2 : cloudLabel2->points) {
+			p2.label = label2;
+		}
+		for (auto &p3 : cloudLabel3->points) {
+			p3.label = label3;
+		}
+		for (auto &p4 : cloudLabel4->points) {
+			p4.label = label4;
+		}
+		for (auto &p5 : cloudLabel5->points) {
+			p5.label = label5;
+		}
+		cout << "nach pointcloud label shiet" << endl;
 
-	cout << "vor pointcloud label shiet" << endl;
-	for (auto &p1 : cloudLabel1->points) {
-		p1.label = label1;
-	}
-	for (auto &p2 : cloudLabel2->points) {
-		p2.label = label2;
-	}
-	for (auto &p3 : cloudLabel3->points) {
-		p3.label = label3;
-	}
-	for (auto &p4 : cloudLabel4->points) {
-		p4.label = label4;
-	}
-	for (auto &p5 : cloudLabel5->points) {
-		p5.label = label5;
-	}
-	cout << "nach pointcloud label shiet" << endl;
+		// rufe registrierung per ICP auf
+		if (IterativeClosestPoints)
+		{
+			// source features n keypoints kk
+			//PointCloud<FPFHSignature33>::Ptr features1; 
+			////vector<int> keypoints1;
+			//boost::shared_ptr<vector<int>> keypoints1;
+			//// target same same
+			//PointCloud<FPFHSignature33>::Ptr features2;
+			//boost::shared_ptr<vector<int>> keypoints2;
 
-	/*uint8_t r1 = 255, g1 = 0, b1 = 0;
-	uint32_t rgb1 = ((uint32_t)r1 << 16 | (uint32_t)g1 << 8 | (uint32_t)b1);
-	for (auto &p1 : cloudLabelRB1->points) {
-		p1.label = label1;
-		p1.rgb = *reinterpret_cast<float*>(&rgb1);
+			// vorberechnungen fuer besser alignment etc
+			// eingabe: uno cloud, ausgabe: features&keypoints hell yeah
+			/*keypointAndDescriptorCompute(cloudLabel1, features1, keypoints1);
+			keypointAndDescriptorCompute(cloudLabel2, features2, keypoints2);
+
+			initialTransformMatrixCompute(features1, keypoints1, features2, keypoints2, transformInitial);*/
+
+			Eigen::Matrix4f startTransform;
+			CorrespondencesPtr corrFiltered(new Correspondences);
+
+			Eigen::Matrix4f result12Transform;
+			Eigen::Matrix4f result123Transform;
+			Eigen::Matrix4f result1234Transform;
+			initialTransformCrude(cloudLabel1, cloudLabel2, startTransform, corrFiltered);
+			registerICP(cloudLabel1, cloudLabel2, startTransform, corrFiltered, result12, result12Transform);
+
+			std::stringstream ss3;
+			ss3 << "registration12.ply";
+			savePLYFile(ss3.str(), *result12, true);
+
+			// ergebnis erste registrierung wird neue src cloud
+			registerICP(result12, cloudLabel3, result12Transform, corrFiltered, result123, result123Transform);
+
+			std::stringstream ss4;
+			ss4 << "registration123.ply";
+			savePLYFile(ss4.str(), *result123, true);
+
+			// ergebnis zweite registrierung wird neue src cloud
+			registerICP(result123, cloudLabel4, result123Transform, corrFiltered, result1234, result1234Transform);
+
+			std::stringstream ss5;
+			ss5 << "registration1234.ply";
+			savePLYFile(ss5.str(), *result1234, true);
+
+			// Bonn Paper ICP
+			//registerICP2(cloudLabel1, cloudLabel2, result);
+
+			//// transform current pair into the global transform
+			//transformPointCloud(*output, *result, GlobalTransform);
+
+			//// update the global transform
+			//GlobalTransform = GlobalTransform * final_transform;
+		}
+
+		// rufe registrierung per NDT auf
+		else if (NormalDistributionTrans)
+		{
+			registerNDT(cloudLabel1, cloudLabel2, result12);
+		}
+
+		/* Legende: Cloud 1 rot
+					Cloud 2 gruen
+					Cloud 3 blau
+					Cloud 4 gelb
+					Cloud 5 lila */
+
+		uint8_t r1 = 255, g1 = 0, b1 = 0;
+		uint32_t rgb1 = ((uint32_t)r1 << 16 | (uint32_t)g1 << 8 | (uint32_t)b1);
+		uint8_t r2 = 0, g2 = 255, b2 = 0;
+		uint32_t rgb2 = ((uint32_t)r2 << 16 | (uint32_t)g2 << 8 | (uint32_t)b2);
+		uint8_t r3 = 0, g3 = 0, b3 = 255;
+		uint32_t rgb3 = ((uint32_t)r3 << 16 | (uint32_t)g3 << 8 | (uint32_t)b3);
+		uint8_t r4 = 255, g4 = 255, b4 = 0;
+		uint32_t rgb4 = ((uint32_t)r4 << 16 | (uint32_t)g4 << 8 | (uint32_t)b4);
+		uint8_t r5 = 255, g5 = 0, b5 = 255;
+		uint32_t rgb5 = ((uint32_t)r5 << 16 | (uint32_t)g5 << 8 | (uint32_t)b5);
+
+		for (size_t i = 0; i < result1234->points.size(); ++i) {
+			switch (result1234->points[i].label) {
+			case 1: {
+				result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb1);
+				break;
+			}
+			case 2: {
+				result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb2);
+				break;
+			}
+			case 3: {
+				result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb3);
+				break;
+			}
+			case 4: {
+				result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb4);
+				break;
+			}
+			case 5: {
+				result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb5);
+				break;
+			}
+			}
+		}
+
+		// Registrierte Cloud in RotBlauGruenGelb Darstellung
+		std::stringstream ss6;
+		ss6 << "registration1234RB.ply";
+		savePLYFile(ss6.str(), *result1234, true);
+
 	}
 
-	uint8_t r2 = 0, g2 = 0, b2 = 255;
-	uint32_t rgb2 = ((uint32_t)r2 << 16 | (uint32_t)g2 << 8 | (uint32_t)b2);
-	for (auto &p2 : cloudLabelRB2->points) {
-		p2.label = label2;
-		p2.rgb = *reinterpret_cast<float*>(&rgb2);
-	}*/
-
-	// resultat der registrierung von cloud 1&2
-	PointCloud<PointL>::Ptr result12(new PointCloud<PointL>());
-	PointCloud<PointL>::Ptr result123(new PointCloud<PointL>());
-	PointCloud<PointL>::Ptr result1234(new PointCloud<PointL>());
-
-	// rufe registrierung per ICP auf
-	if (IterativeClosestPoints)
+	// Registrierung ist fertig, d.h. wir definieren result1234 als clouds[0]=cloud1
+	else
 	{
-		// source features n keypoints kk
-		//PointCloud<FPFHSignature33>::Ptr features1; 
-		////vector<int> keypoints1;
-		//boost::shared_ptr<vector<int>> keypoints1;
-		//// target same same
-		//PointCloud<FPFHSignature33>::Ptr features2;
-		//boost::shared_ptr<vector<int>> keypoints2;
-
-		// vorberechnungen fuer besser alignment etc
-		// eingabe: uno cloud, ausgabe: features&keypoints hell yeah
-		/*keypointAndDescriptorCompute(cloudLabel1, features1, keypoints1);
-		keypointAndDescriptorCompute(cloudLabel2, features2, keypoints2);
-
-		initialTransformMatrixCompute(features1, keypoints1, features2, keypoints2, transformInitial);*/
-		
-		Eigen::Matrix4f startTransform;
-		CorrespondencesPtr corrFiltered(new Correspondences);
-
-		Eigen::Matrix4f result12Transform;
-		Eigen::Matrix4f result123Transform;
-		Eigen::Matrix4f result1234Transform;
-		initialTransformCrude(cloudLabel1, cloudLabel2, startTransform, corrFiltered);
-		registerICP(cloudLabel1, cloudLabel2, startTransform, corrFiltered, result12, result12Transform);
-
-		std::stringstream ss3;
-		ss3 << "registration12.ply";
-		savePLYFile(ss3.str(), *result12, true);
-
-		// ergebnis erste registrierung wird neue src cloud
-		registerICP(result12, cloudLabel3, result12Transform, corrFiltered, result123, result123Transform);
-
-		std::stringstream ss4;
-		ss4 << "registration123.ply";
-		savePLYFile(ss4.str(), *result123, true);
-
-		// ergebnis zweite registrierung wird neue src cloud
-		registerICP(result123, cloudLabel4, result123Transform, corrFiltered, result1234, result1234Transform);
-
-		std::stringstream ss5;
-		ss5 << "registration1234.ply";
-		savePLYFile(ss5.str(), *result1234, true);
-
-		// Bonn Paper ICP
-		//registerICP2(cloudLabel1, cloudLabel2, result);
-
-		//// transform current pair into the global transform
-		//transformPointCloud(*output, *result, GlobalTransform);
-
-		//// update the global transform
-		//GlobalTransform = GlobalTransform * final_transform;
+		copyPointCloud(*cloud1, *result1234);
+		cout << "label aus reg wolke 5: " << result1234->points[5].label << endl;
+		cout << "label aus reg wolke 356: " << result1234->points[356].label << endl;
+		cout << "label aus reg wolke 36363: " << result1234->points[36363].label << endl;
+		cout << "label aus reg wolke 123: " << result1234->points[123].label << endl;
 	}
-	
-	// rufe registrierung per NDT auf
-	else if (NormalDistributionTrans)
-	{
-		registerNDT(cloudLabel1, cloudLabel2, result12);
-	}
-
-	//// einmal die cloud saven bitte, danke
-	//std::stringstream ss3;
-	//ss3 << "registration12.ply";
-	//savePLYFile(ss3.str(), *result12, true);
-	//std::stringstream ss4;
-	//ss4 << "registration123.ply";
-	//savePLYFile(ss4.str(), *result123, true);
-	//std::stringstream ss5;
-	//ss5 << "registration1234.ply";
-	//savePLYFile(ss5.str(), *result1234, true);
 
 	PointCloud<PointXYZRGBL>::Ptr cloudMergedFarbig(new PointCloud<PointXYZRGBL>());
-	//PointCloud<PointXYZRGBL>::Ptr cloudMergedRotBlau(new PointCloud<PointXYZRGBL>());
+	PointCloud<PointXYZRGBL>::Ptr cloudMergedRotBlau(new PointCloud<PointXYZRGBL>());
 	PointCloud<PointXYZRGBL>::Ptr cloudFilteredFarbig(new PointCloud<PointXYZRGBL>());
-	//PointCloud<PointXYZRGBL>::Ptr cloudFilteredRotBlau(new PointCloud<PointXYZRGBL>());
+	PointCloud<PointXYZRGBL>::Ptr cloudFilteredRotBlau(new PointCloud<PointXYZRGBL>());
 	if (LeafnodeIterator)
 	{
 		*cloudMergedFarbig = *result1234;
 
-		//*cloudMergedFarbig = *cloudLabel1;
-		//*cloudMergedFarbig = *cloudMergedFarbig + *cloudLabel2;
-
-		//*cloudMergedRotBlau = *cloudRotBlau1;
-		//*cloudMergedRotBlau = *cloudMergedRotBlau + *cloudRotBlau2;
-
-		//savePLYFileBinary("FarbigMerged.ply", *cloudMergedFarbig);
-		//savePLYFileBinary("RotBlauMerged.ply", *cloudMergedRotBlau);
-
 		// Tiefes des Baumes (standard scheint m, moeglicherweise immer im Bezug auf Quelldaten)
-		float resolution = 0.10f;
+		float resolution = 0.03f;
 
 		// Octree auf gemergte Pointcloud
 		OctreePointCloud<PointXYZRGBL> octreeFarbig(resolution);
-		OctreePointCloud<PointXYZRGBL> octreeRotBlau(resolution);
 
 		//octree.max_objs_per_leaf_ = (size_t)50000;
 
 		octreeFarbig.setInputCloud(cloudMergedFarbig);
-		//octreeRotBlau.setInputCloud(cloudMergedRotBlau);
 		// BoundingBox muss vor addPoints ausgelesen werden, Begruendung unklar aber durch Tests bestaetigt
 		// sowohl defineBoudingBox() als auch octree.defineBoundingBox(10.0f) liefern gewuenschte Resultate
 		octreeFarbig.defineBoundingBox();
-		//octreeRotBlau.defineBoundingBox();
 		//octree.defineBoundingBox(10.0f);
 		octreeFarbig.addPointsFromInputCloud();
-		//octreeRotBlau.addPointsFromInputCloud();
 
 		OctreePointCloud<PointXYZRGBL>::LeafNodeIterator iterFarbig(&octreeFarbig);
-		//OctreePointCloud<PointXYZRGBL>::LeafNodeIterator iterRotBlau(&octreeRotBlau);
 
 		// Vector speichert Indizes von Punkten im aktuellen Leafnode
 		vector<int> indexVector;
@@ -630,11 +657,6 @@ int main(int argc, char** argv)
 			// Zu Testzwecken erstmal einfach Ausgabe der Punkte im Vektor
 			for (size_t i = 0; i < indexVector.size(); ++i)
 			{
-				/*std::cout << " x " << cloudMerged->points[indexVector[i]].x
-				<< " Size " << indexVector.size()
-				<< " Label " << cloudMerged->points[indexVector[i]].label
-				<< std::endl;*/
-
 				// bessere implementierung (schoener): array[0] = counterCloud1 bis array[4] = counterCloud4, dann schleife ueber array.size
 				int counterCloud1 = 0;
 				int counterCloud2 = 0;
@@ -714,8 +736,55 @@ int main(int argc, char** argv)
 		}
 	}
 
-	// noch einmal die cloud saven bitte, danke
-	std::stringstream ss6;
-	ss6 << "registration1234LeafIter.ply";
-	savePLYFile(ss6.str(), *cloudFilteredFarbig, true);
+	// Registrierte Cloud nach LeafIteration Filter
+	std::stringstream ss7;
+	ss7 << "registration1234LeafIter.ply";
+	savePLYFile(ss7.str(), *cloudFilteredFarbig, true);
+
+	/* Legende: Cloud 1 rot
+				Cloud 2 gruen
+				Cloud 3 blau
+				Cloud 4 gelb
+				Cloud 5 lila */
+
+	uint8_t r1 = 255, g1 = 0, b1 = 0;
+	uint32_t rgb1 = ((uint32_t)r1 << 16 | (uint32_t)g1 << 8 | (uint32_t)b1);
+	uint8_t r2 = 0, g2 = 255, b2 = 0;
+	uint32_t rgb2 = ((uint32_t)r2 << 16 | (uint32_t)g2 << 8 | (uint32_t)b2);
+	uint8_t r3 = 0, g3 = 0, b3 = 255;
+	uint32_t rgb3 = ((uint32_t)r3 << 16 | (uint32_t)g3 << 8 | (uint32_t)b3);
+	uint8_t r4 = 255, g4 = 255, b4 = 0;
+	uint32_t rgb4 = ((uint32_t)r4 << 16 | (uint32_t)g4 << 8 | (uint32_t)b4);
+	uint8_t r5 = 255, g5 = 0, b5 = 255;
+	uint32_t rgb5 = ((uint32_t)r5 << 16 | (uint32_t)g5 << 8 | (uint32_t)b5);
+	
+	for (size_t i = 0; i < cloudFilteredFarbig->points.size(); ++i) {
+		switch (cloudFilteredFarbig->points[i].label) {
+		case 1: {
+			cloudFilteredFarbig->points[i].rgb = *reinterpret_cast<float*>(&rgb1);
+			break;
+		}
+		case 2: {
+			cloudFilteredFarbig->points[i].rgb = *reinterpret_cast<float*>(&rgb2);
+			break;
+		}
+		case 3: {
+			cloudFilteredFarbig->points[i].rgb = *reinterpret_cast<float*>(&rgb3);
+			break;
+		}
+		case 4: {
+			cloudFilteredFarbig->points[i].rgb = *reinterpret_cast<float*>(&rgb4);
+			break;
+		}
+		case 5: {
+			cloudFilteredFarbig->points[i].rgb = *reinterpret_cast<float*>(&rgb5);
+			break;
+		}
+		}
+	}
+
+	// Registrierte Cloud nach LeafIteration Filter in RotBlauGruenGelb Darstellung
+	std::stringstream ss8;
+	ss8 << "registration1234LeafIterRB.ply";
+	savePLYFile(ss8.str(), *cloudFilteredFarbig, true);
 }
