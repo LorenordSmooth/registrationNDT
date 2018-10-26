@@ -50,7 +50,8 @@ typedef typename pcl::Feature<PointL, FPFHSignature33>::Ptr FeatureEstimatorPtr;
 typedef boost::shared_ptr<const pcl::PointRepresentation <FPFHSignature33> > FeatureRepresentationConstPtr;
 
 // globals
-int anzahlClouds = 1;
+bool labelVorhanden = false;
+int anzahlClouds = 2;
 int anzahlIterationen = 30;
 bool NormalDistributionTrans = false;
 bool IterativeClosestPoints = true;
@@ -58,23 +59,44 @@ bool LeafnodeIterator = true;
 bool registrierungFertig = false;
 
 int ladeClouds(int argc, char** argv, vector<PointCloud<PointT>::Ptr, 
-	Eigen::aligned_allocator<PointCloud<PointT>::Ptr>> &sourceClouds)
+	Eigen::aligned_allocator<PointCloud<PointT>::Ptr>> &sourceClouds, vector<PointCloud<PointL>::Ptr,
+	Eigen::aligned_allocator<PointCloud<PointL>::Ptr>> &sourceCloudsLabel)
 {
 	// Einlesen der Dateinamen der 5 Punktewolken
 	vector<int> filenames;
 	filenames = console::parse_file_extension_argument(argc, argv, ".ply");
 
-	// Lade die clouds in einen cloud-vektor
-	for (int i = 0; i < anzahlClouds; ++i)
+	// wenn bereits Label existieren, muss der Datentyp der Clouds angepasst werden
+	if (labelVorhanden)
 	{
-		PointCloud<PointT>::Ptr cloud(new PointCloud<PointT>());
-		if (loadPLYFile(argv[filenames[i]], *cloud) < 0) {
-			cout << "Fehler beim Laden der Cloud " << argv[filenames[i]] << endl << endl;
-			return -1;
+		// Lade die clouds in einen cloud-vektor
+		for (int i = 0; i < anzahlClouds; ++i)
+		{
+			PointCloud<PointL>::Ptr cloud(new PointCloud<PointL>());
+			if (loadPLYFile(argv[filenames[i]], *cloud) < 0) {
+				cout << "Fehler beim Laden der Cloud " << argv[filenames[i]] << endl << endl;
+				return -1;
+			}
+			sourceCloudsLabel.push_back(cloud);
+			cout << "test" << i << endl;
 		}
-		sourceClouds.push_back(cloud);
-		cout << "test" << i << endl;
 	}
+
+	else if (!labelVorhanden)
+	{
+		// Lade die clouds in einen cloud-vektor
+		for (int i = 0; i < anzahlClouds; ++i)
+		{
+			PointCloud<PointT>::Ptr cloud(new PointCloud<PointT>());
+			if (loadPLYFile(argv[filenames[i]], *cloud) < 0) {
+				cout << "Fehler beim Laden der Cloud " << argv[filenames[i]] << endl << endl;
+				return -1;
+			}
+			sourceClouds.push_back(cloud);
+			cout << "test" << i << endl;
+		}
+	}
+
 }
 
 void registerNDT(const PointCloud<PointL>::Ptr cloud_src, const PointCloud<PointL>::Ptr cloud_tgt, 
@@ -407,43 +429,82 @@ int main(int argc, char** argv)
 
 	// lade die clouds in einen vector von clouds
 	vector<PointCloud<PointT>::Ptr, Eigen::aligned_allocator<PointCloud<PointT>::Ptr>> clouds;
-	ladeClouds(argc, argv, clouds);
+	vector<PointCloud<PointL>::Ptr, Eigen::aligned_allocator<PointCloud<PointL>::Ptr>> cloudsLabel;
+	ladeClouds(argc, argv, clouds, cloudsLabel);
 
 	// initialisiere die arbeits clouds (uebersichtlicher)
-	switch (anzahlClouds) {
-		case 1: {
-			*cloud1 = *clouds[0];
-			// wenn wir nur eine Cloud laden, ist dies die bereits fertig registrierte
-			registrierungFertig = true;
-			break;
-		}
-		case 2: {
-			*cloud1 = *clouds[0];
-			*cloud2 = *clouds[1];
-			break;
-		}
-		case 3: {
-			*cloud1 = *clouds[0];
-			*cloud2 = *clouds[1];
-			*cloud3 = *clouds[2];
-			break;
-		}
-		case 4: {
-			*cloud1 = *clouds[0];
-			*cloud2 = *clouds[1];
-			*cloud3 = *clouds[2];
-			*cloud4 = *clouds[3];
-			break;
-		}
-		case 5: {
-			*cloud1 = *clouds[0];
-			*cloud2 = *clouds[1];
-			*cloud3 = *clouds[2];
-			*cloud4 = *clouds[3];
-			*cloud5 = *clouds[4];
-			break;
+	// Label muessen noch definiert werden, d.h. wir ueberfuehren in temp XYZRGB=PointT clouds
+	if (!labelVorhanden)
+	{
+		switch (anzahlClouds) {
+			case 2: {
+				*cloud1 = *clouds[0];
+				*cloud2 = *clouds[1];
+				break;
+			}
+			case 3: {
+				*cloud1 = *clouds[0];
+				*cloud2 = *clouds[1];
+				*cloud3 = *clouds[2];
+				break;
+			}
+			case 4: {
+				*cloud1 = *clouds[0];
+				*cloud2 = *clouds[1];
+				*cloud3 = *clouds[2];
+				*cloud4 = *clouds[3];
+				break;
+			}
+			case 5: {
+				*cloud1 = *clouds[0];
+				*cloud2 = *clouds[1];
+				*cloud3 = *clouds[2];
+				*cloud4 = *clouds[3];
+				*cloud5 = *clouds[4];
+				break;
+			}
 		}
 	}
+
+	// label sind schon definiert, also ueberfuehren in PointL format
+	else if (labelVorhanden)
+	{
+		switch (anzahlClouds) {
+			case 1: {
+				*cloudLabel1 = *cloudsLabel[0];
+				// wenn wir nur eine Cloud laden, ist dies die bereits fertig registrierte
+				registrierungFertig = true;
+				break;
+			}
+			case 2: {
+				*cloudLabel1 = *cloudsLabel[0];
+				*cloudLabel2 = *cloudsLabel[1];
+				break;
+			}
+			case 3: {
+				*cloudLabel1 = *cloudsLabel[0];
+				*cloudLabel2 = *cloudsLabel[1];
+				*cloudLabel3 = *cloudsLabel[2];
+				break;
+			}
+			case 4: {
+				*cloudLabel1 = *cloudsLabel[0];
+				*cloudLabel2 = *cloudsLabel[1];
+				*cloudLabel3 = *cloudsLabel[2];
+				*cloudLabel4 = *cloudsLabel[3];
+				break;
+			}
+			case 5: {
+				*cloudLabel1 = *cloudsLabel[0];
+				*cloudLabel2 = *cloudsLabel[1];
+				*cloudLabel3 = *cloudsLabel[2];
+				*cloudLabel4 = *cloudsLabel[3];
+				*cloudLabel5 = *cloudsLabel[4];
+				break;
+			}
+		}
+	}
+	
 
 	// wenn registrierungFertig true, ueberspringe das Labeln und die RegistrierungsMethoden, direkt zu LeafIter
 	if (!registrierungFertig)
@@ -451,12 +512,68 @@ int main(int argc, char** argv)
 
 		cout << "vor pointcloud copy shiet" << endl;
 		// temporaer: konvertiere zwei (beliebige) eingelesenen Clouds in (neue) XYZRGBL Clouds
-		copyPointCloud(*cloud1, *cloudLabel1);
-		copyPointCloud(*cloud2, *cloudLabel2);
-		copyPointCloud(*cloud3, *cloudLabel3);
-		copyPointCloud(*cloud4, *cloudLabel4);
-		copyPointCloud(*cloud5, *cloudLabel5);
+		copypointcloud(*cloud1, *cloudlabel1);
+		copypointcloud(*cloud2, *cloudlabel2);
+		copypointcloud(*cloud3, *cloudlabel3);
+		copypointcloud(*cloud4, *cloudlabel4);
+		copypointcloud(*cloud5, *cloudlabel5);
+		/**cloudLabel1 = *cloud1;
+		*cloudLabel2 = *cloud2;
+		*cloudLabel3 = *cloud3;
+		*cloudLabel4 = *cloud4;
+		*cloudLabel5 = *cloud5;*/
 		cout << "Nach pointcloud copy shiet" << endl;
+
+		vector<int> counter = { 0, 0, 0, 0 };
+
+		for (auto &p2 : cloudLabel1->points) {
+			if (p2.label == 1)
+			{
+				counter[0] += 1;
+			}
+			if (p2.label == 2)
+			{
+				counter[1] += 1;
+			}
+			if (p2.label == 3)
+			{
+				counter[2] += 1;
+			}
+			if (p2.label == 4)
+			{
+				counter[3] += 1;
+			}
+		}
+		cout << " label1: " << counter[0] << endl;
+		cout << " label2: " << counter[1] << endl;
+		cout << " label3: " << counter[2] << endl;
+		cout << " label4: " << counter[3] << endl;
+		cout << "         break           " << endl;
+
+		counter = { 0, 0, 0, 0 };
+
+		for (auto &p2 : cloudLabel2->points) {
+			if (p2.label == 1)
+			{
+				counter[0] += 1;
+			}
+			if (p2.label == 2)
+			{
+				counter[1] += 1;
+			}
+			if (p2.label == 3)
+			{
+				counter[2] += 1;
+			}
+			if (p2.label == 4)
+			{
+				counter[3] += 1;
+			}
+		}
+		cout << " label1: " << counter[0] << endl;
+		cout << " label2: " << counter[1] << endl;
+		cout << " label3: " << counter[2] << endl;
+		cout << " label4: " << counter[3] << endl;
 
 		// Initialisiere RotBlau Clouds
 		*cloudLabelRB1 = *cloudLabel1;
