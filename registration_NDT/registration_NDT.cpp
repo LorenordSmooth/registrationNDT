@@ -51,7 +51,7 @@ typedef boost::shared_ptr<const pcl::PointRepresentation <FPFHSignature33> > Fea
 
 // globals
 bool labelVorhanden = true;
-int anzahlClouds = 2;
+int anzahlClouds;
 int anzahlIterationen = 30;
 bool NormalDistributionTrans = false;
 bool IterativeClosestPoints = true;
@@ -66,8 +66,9 @@ int ladeClouds(int argc, char** argv, vector<PointCloud<PointL>::Ptr,
 	filenames = console::parse_file_extension_argument(argc, argv, ".ply");
 	
 	// Lade die clouds in einen cloud-vektor
-	for (int i = 0; i < anzahlClouds; ++i)
+	for (int i = 0; i < filenames.size(); ++i)
 	{
+		anzahlClouds = filenames.size();
 		PointCloud<PointL>::Ptr cloud(new PointCloud<PointL>());
 		if (loadPLYFile(argv[filenames[i]], *cloud) < 0) {
 			cout << "Fehler beim Laden der Cloud " << argv[filenames[i]] << endl << endl;
