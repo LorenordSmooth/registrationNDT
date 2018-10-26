@@ -50,53 +50,32 @@ typedef typename pcl::Feature<PointL, FPFHSignature33>::Ptr FeatureEstimatorPtr;
 typedef boost::shared_ptr<const pcl::PointRepresentation <FPFHSignature33> > FeatureRepresentationConstPtr;
 
 // globals
-bool labelVorhanden = false;
+bool labelVorhanden = true;
 int anzahlClouds = 2;
 int anzahlIterationen = 30;
 bool NormalDistributionTrans = false;
 bool IterativeClosestPoints = true;
 bool LeafnodeIterator = true;
-bool registrierungFertig = false;
+bool registrierungFertig = true;
 
-int ladeClouds(int argc, char** argv, vector<PointCloud<PointT>::Ptr, 
-	Eigen::aligned_allocator<PointCloud<PointT>::Ptr>> &sourceClouds, vector<PointCloud<PointL>::Ptr,
-	Eigen::aligned_allocator<PointCloud<PointL>::Ptr>> &sourceCloudsLabel)
+int ladeClouds(int argc, char** argv, vector<PointCloud<PointL>::Ptr, 
+	Eigen::aligned_allocator<PointCloud<PointL>::Ptr>> &sourceClouds)
 {
 	// Einlesen der Dateinamen der 5 Punktewolken
 	vector<int> filenames;
 	filenames = console::parse_file_extension_argument(argc, argv, ".ply");
-
-	// wenn bereits Label existieren, muss der Datentyp der Clouds angepasst werden
-	if (labelVorhanden)
+	
+	// Lade die clouds in einen cloud-vektor
+	for (int i = 0; i < anzahlClouds; ++i)
 	{
-		// Lade die clouds in einen cloud-vektor
-		for (int i = 0; i < anzahlClouds; ++i)
-		{
-			PointCloud<PointL>::Ptr cloud(new PointCloud<PointL>());
-			if (loadPLYFile(argv[filenames[i]], *cloud) < 0) {
-				cout << "Fehler beim Laden der Cloud " << argv[filenames[i]] << endl << endl;
-				return -1;
-			}
-			sourceCloudsLabel.push_back(cloud);
-			cout << "test" << i << endl;
+		PointCloud<PointL>::Ptr cloud(new PointCloud<PointL>());
+		if (loadPLYFile(argv[filenames[i]], *cloud) < 0) {
+			cout << "Fehler beim Laden der Cloud " << argv[filenames[i]] << endl << endl;
+			return -1;
 		}
+		sourceClouds.push_back(cloud);
+		cout << "test" << i << endl;
 	}
-
-	else if (!labelVorhanden)
-	{
-		// Lade die clouds in einen cloud-vektor
-		for (int i = 0; i < anzahlClouds; ++i)
-		{
-			PointCloud<PointT>::Ptr cloud(new PointCloud<PointT>());
-			if (loadPLYFile(argv[filenames[i]], *cloud) < 0) {
-				cout << "Fehler beim Laden der Cloud " << argv[filenames[i]] << endl << endl;
-				return -1;
-			}
-			sourceClouds.push_back(cloud);
-			cout << "test" << i << endl;
-		}
-	}
-
 }
 
 void registerNDT(const PointCloud<PointL>::Ptr cloud_src, const PointCloud<PointL>::Ptr cloud_tgt, 
@@ -405,11 +384,11 @@ void registerICP(const PointCloud<PointL>::Ptr cloud_src, const PointCloud<Point
 int main(int argc, char** argv)
 {
 	// Base Clouds
-	PointCloud<PointT>::Ptr cloud1(new PointCloud<PointT>());
-	PointCloud<PointT>::Ptr cloud2(new PointCloud<PointT>());
-	PointCloud<PointT>::Ptr cloud3(new PointCloud<PointT>());
-	PointCloud<PointT>::Ptr cloud4(new PointCloud<PointT>());
-	PointCloud<PointT>::Ptr cloud5(new PointCloud<PointT>());
+	PointCloud<PointL>::Ptr cloud1(new PointCloud<PointL>());
+	PointCloud<PointL>::Ptr cloud2(new PointCloud<PointL>());
+	PointCloud<PointL>::Ptr cloud3(new PointCloud<PointL>());
+	PointCloud<PointL>::Ptr cloud4(new PointCloud<PointL>());
+	PointCloud<PointL>::Ptr cloud5(new PointCloud<PointL>());
 	// Clouds mit Label
 	PointCloud<PointL>::Ptr cloudLabel1(new PointCloud<PointL>());
 	PointCloud<PointL>::Ptr cloudLabel2(new PointCloud<PointL>());
@@ -428,152 +407,82 @@ int main(int argc, char** argv)
 	PointCloud<PointL>::Ptr result1234(new PointCloud<PointL>());
 
 	// lade die clouds in einen vector von clouds
-	vector<PointCloud<PointT>::Ptr, Eigen::aligned_allocator<PointCloud<PointT>::Ptr>> clouds;
-	vector<PointCloud<PointL>::Ptr, Eigen::aligned_allocator<PointCloud<PointL>::Ptr>> cloudsLabel;
-	ladeClouds(argc, argv, clouds, cloudsLabel);
+	vector<PointCloud<PointL>::Ptr, Eigen::aligned_allocator<PointCloud<PointL>::Ptr>> clouds;
+	ladeClouds(argc, argv, clouds);
 
 	// initialisiere die arbeits clouds (uebersichtlicher)
-	// Label muessen noch definiert werden, d.h. wir ueberfuehren in temp XYZRGB=PointT clouds
-	if (!labelVorhanden)
-	{
-		switch (anzahlClouds) {
-			case 2: {
-				*cloud1 = *clouds[0];
-				*cloud2 = *clouds[1];
-				break;
-			}
-			case 3: {
-				*cloud1 = *clouds[0];
-				*cloud2 = *clouds[1];
-				*cloud3 = *clouds[2];
-				break;
-			}
-			case 4: {
-				*cloud1 = *clouds[0];
-				*cloud2 = *clouds[1];
-				*cloud3 = *clouds[2];
-				*cloud4 = *clouds[3];
-				break;
-			}
-			case 5: {
-				*cloud1 = *clouds[0];
-				*cloud2 = *clouds[1];
-				*cloud3 = *clouds[2];
-				*cloud4 = *clouds[3];
-				*cloud5 = *clouds[4];
-				break;
-			}
+	switch (anzahlClouds) {
+		case 1: {
+			*cloud1 = *clouds[0];
+			// wenn wir nur eine Cloud laden, ist dies die bereits fertig registrierte
+			registrierungFertig = true;
+			break;
+		}
+		case 2: {
+			*cloud1 = *clouds[0];
+			*cloud2 = *clouds[1];
+			break;
+		}
+		case 3: {
+			*cloud1 = *clouds[0];
+			*cloud2 = *clouds[1];
+			*cloud3 = *clouds[2];
+			break;
+		}
+		case 4: {
+			*cloud1 = *clouds[0];
+			*cloud2 = *clouds[1];
+			*cloud3 = *clouds[2];
+			*cloud4 = *clouds[3];
+			break;
+		}
+		case 5: {
+			*cloud1 = *clouds[0];
+			*cloud2 = *clouds[1];
+			*cloud3 = *clouds[2];
+			*cloud4 = *clouds[3];
+			*cloud5 = *clouds[4];
+			break;
 		}
 	}
 
-	// label sind schon definiert, also ueberfuehren in PointL format
-	else if (labelVorhanden)
-	{
-		switch (anzahlClouds) {
-			case 1: {
-				*cloudLabel1 = *cloudsLabel[0];
-				// wenn wir nur eine Cloud laden, ist dies die bereits fertig registrierte
-				registrierungFertig = true;
-				break;
-			}
-			case 2: {
-				*cloudLabel1 = *cloudsLabel[0];
-				*cloudLabel2 = *cloudsLabel[1];
-				break;
-			}
-			case 3: {
-				*cloudLabel1 = *cloudsLabel[0];
-				*cloudLabel2 = *cloudsLabel[1];
-				*cloudLabel3 = *cloudsLabel[2];
-				break;
-			}
-			case 4: {
-				*cloudLabel1 = *cloudsLabel[0];
-				*cloudLabel2 = *cloudsLabel[1];
-				*cloudLabel3 = *cloudsLabel[2];
-				*cloudLabel4 = *cloudsLabel[3];
-				break;
-			}
-			case 5: {
-				*cloudLabel1 = *cloudsLabel[0];
-				*cloudLabel2 = *cloudsLabel[1];
-				*cloudLabel3 = *cloudsLabel[2];
-				*cloudLabel4 = *cloudsLabel[3];
-				*cloudLabel5 = *cloudsLabel[4];
-				break;
-			}
+	vector<int> counter = { 0, 0, 0, 0 };
+
+	for (auto &p2 : cloud1->points) {
+		if (p2.label == 1)
+		{
+			counter[0] += 1;
+		}
+		if (p2.label == 2)
+		{
+			counter[1] += 1;
+		}
+		if (p2.label == 3)
+		{
+			counter[2] += 1;
+		}
+		if (p2.label == 4)
+		{
+			counter[3] += 1;
 		}
 	}
-	
+	cout << " label1: " << counter[0] << endl;
+	cout << " label2: " << counter[1] << endl;
+	cout << " label3: " << counter[2] << endl;
+	cout << " label4: " << counter[3] << endl;
+	cout << "         break           " << endl;
 
 	// wenn registrierungFertig true, ueberspringe das Labeln und die RegistrierungsMethoden, direkt zu LeafIter
 	if (!registrierungFertig)
 	{
 
 		cout << "vor pointcloud copy shiet" << endl;
-		// temporaer: konvertiere zwei (beliebige) eingelesenen Clouds in (neue) XYZRGBL Clouds
-		copypointcloud(*cloud1, *cloudlabel1);
-		copypointcloud(*cloud2, *cloudlabel2);
-		copypointcloud(*cloud3, *cloudlabel3);
-		copypointcloud(*cloud4, *cloudlabel4);
-		copypointcloud(*cloud5, *cloudlabel5);
-		/**cloudLabel1 = *cloud1;
+		*cloudLabel1 = *cloud1;
 		*cloudLabel2 = *cloud2;
 		*cloudLabel3 = *cloud3;
 		*cloudLabel4 = *cloud4;
-		*cloudLabel5 = *cloud5;*/
+		*cloudLabel5 = *cloud5;
 		cout << "Nach pointcloud copy shiet" << endl;
-
-		vector<int> counter = { 0, 0, 0, 0 };
-
-		for (auto &p2 : cloudLabel1->points) {
-			if (p2.label == 1)
-			{
-				counter[0] += 1;
-			}
-			if (p2.label == 2)
-			{
-				counter[1] += 1;
-			}
-			if (p2.label == 3)
-			{
-				counter[2] += 1;
-			}
-			if (p2.label == 4)
-			{
-				counter[3] += 1;
-			}
-		}
-		cout << " label1: " << counter[0] << endl;
-		cout << " label2: " << counter[1] << endl;
-		cout << " label3: " << counter[2] << endl;
-		cout << " label4: " << counter[3] << endl;
-		cout << "         break           " << endl;
-
-		counter = { 0, 0, 0, 0 };
-
-		for (auto &p2 : cloudLabel2->points) {
-			if (p2.label == 1)
-			{
-				counter[0] += 1;
-			}
-			if (p2.label == 2)
-			{
-				counter[1] += 1;
-			}
-			if (p2.label == 3)
-			{
-				counter[2] += 1;
-			}
-			if (p2.label == 4)
-			{
-				counter[3] += 1;
-			}
-		}
-		cout << " label1: " << counter[0] << endl;
-		cout << " label2: " << counter[1] << endl;
-		cout << " label3: " << counter[2] << endl;
-		cout << " label4: " << counter[3] << endl;
 
 		// Initialisiere RotBlau Clouds
 		*cloudLabelRB1 = *cloudLabel1;
@@ -674,7 +583,55 @@ int main(int argc, char** argv)
 					Cloud 4 gelb
 					Cloud 5 lila */
 
-		uint8_t r1 = 255, g1 = 0, b1 = 0;
+		//uint8_t r1 = 255, g1 = 0, b1 = 0;
+		//uint32_t rgb1 = ((uint32_t)r1 << 16 | (uint32_t)g1 << 8 | (uint32_t)b1);
+		//uint8_t r2 = 0, g2 = 255, b2 = 0;
+		//uint32_t rgb2 = ((uint32_t)r2 << 16 | (uint32_t)g2 << 8 | (uint32_t)b2);
+		//uint8_t r3 = 0, g3 = 0, b3 = 255;
+		//uint32_t rgb3 = ((uint32_t)r3 << 16 | (uint32_t)g3 << 8 | (uint32_t)b3);
+		//uint8_t r4 = 255, g4 = 255, b4 = 0;
+		//uint32_t rgb4 = ((uint32_t)r4 << 16 | (uint32_t)g4 << 8 | (uint32_t)b4);
+		//uint8_t r5 = 255, g5 = 0, b5 = 255;
+		//uint32_t rgb5 = ((uint32_t)r5 << 16 | (uint32_t)g5 << 8 | (uint32_t)b5);
+
+		//for (size_t i = 0; i < result1234->points.size(); ++i) {
+		//	switch (result1234->points[i].label) {
+		//	case 1: {
+		//		result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb1);
+		//		break;
+		//	}
+		//	case 2: {
+		//		result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb2);
+		//		break;
+		//	}
+		//	case 3: {
+		//		result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb3);
+		//		break;
+		//	}
+		//	case 4: {
+		//		result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb4);
+		//		break;
+		//	}
+		//	case 5: {
+		//		result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb5);
+		//		break;
+		//	}
+		//	}
+		//}
+
+		//// Registrierte Cloud in RotBlauGruenGelb Darstellung
+		//std::stringstream ss6;
+		//ss6 << "registration1234RB.ply";
+		//savePLYFile(ss6.str(), *result1234, true);
+
+	}
+
+	// Registrierung ist fertig, d.h. wir definieren result1234 als clouds[0]=cloud1
+	else
+	{
+		*result1234 = *cloud1;
+
+		/*uint8_t r1 = 255, g1 = 0, b1 = 0;
 		uint32_t rgb1 = ((uint32_t)r1 << 16 | (uint32_t)g1 << 8 | (uint32_t)b1);
 		uint8_t r2 = 0, g2 = 255, b2 = 0;
 		uint32_t rgb2 = ((uint32_t)r2 << 16 | (uint32_t)g2 << 8 | (uint32_t)b2);
@@ -705,58 +662,6 @@ int main(int argc, char** argv)
 			}
 			case 5: {
 				result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb5);
-				break;
-			}
-			}
-		}
-
-		// Registrierte Cloud in RotBlauGruenGelb Darstellung
-		std::stringstream ss6;
-		ss6 << "registration1234RB.ply";
-		savePLYFile(ss6.str(), *result1234, true);
-
-	}
-
-	// Registrierung ist fertig, d.h. wir definieren result1234 als clouds[0]=cloud1
-	else
-	{
-		copyPointCloud(*cloud1, *result1234);
-		/*for (int i = 0; i < 30000; ++i)
-		{
-			cout << "farbe aus reg wolke: " << result1234->points[i].rgb << endl;
-		}*/
-
-		/*uint8_t r1 = 255, g1 = 0, b1 = 0;
-		uint32_t rgb1 = ((uint32_t)r1 << 16 | (uint32_t)g1 << 8 | (uint32_t)b1);
-		uint8_t r2 = 0, g2 = 255, b2 = 0;
-		uint32_t rgb2 = ((uint32_t)r2 << 16 | (uint32_t)g2 << 8 | (uint32_t)b2);
-		uint8_t r3 = 0, g3 = 0, b3 = 255;
-		uint32_t rgb3 = ((uint32_t)r3 << 16 | (uint32_t)g3 << 8 | (uint32_t)b3);
-		uint8_t r4 = 255, g4 = 255, b4 = 0;
-		uint32_t rgb4 = ((uint32_t)r4 << 16 | (uint32_t)g4 << 8 | (uint32_t)b4);
-		uint8_t r5 = 255, g5 = 0, b5 = 255;
-		uint32_t rgb5 = ((uint32_t)r5 << 16 | (uint32_t)g5 << 8 | (uint32_t)b5);*/
-
-		/*for (size_t i = 0; i < result1234->points.size(); ++i) {
-			switch (result1234->points[i].label) {
-			case 1: {
-				cloudFilteredFarbig->points[i].rgb = *reinterpret_cast<float*>(&rgb1);
-				break;
-			}
-			case 2: {
-				cloudFilteredFarbig->points[i].rgb = *reinterpret_cast<float*>(&rgb2);
-				break;
-			}
-			case 3: {
-				cloudFilteredFarbig->points[i].rgb = *reinterpret_cast<float*>(&rgb3);
-				break;
-			}
-			case 4: {
-				cloudFilteredFarbig->points[i].rgb = *reinterpret_cast<float*>(&rgb4);
-				break;
-			}
-			case 5: {
-				cloudFilteredFarbig->points[i].rgb = *reinterpret_cast<float*>(&rgb5);
 				break;
 			}
 			}
@@ -891,9 +796,9 @@ int main(int argc, char** argv)
 	}
 
 	// Registrierte Cloud nach LeafIteration Filter
-	std::stringstream ss7;
+	/*std::stringstream ss7;
 	ss7 << "registration1234LeafIter.ply";
-	savePLYFile(ss7.str(), *cloudFilteredFarbig, true);
+	savePLYFile(ss7.str(), *cloudFilteredFarbig, true);*/
 
 	/* Legende: Cloud 1 rot
 				Cloud 2 gruen
@@ -939,6 +844,6 @@ int main(int argc, char** argv)
 
 	// Registrierte Cloud nach LeafIteration Filter in RotBlauGruenGelb Darstellung
 	std::stringstream ss8;
-	ss8 << "registration1234LeafIterRB.ply";
+	ss8 << "1234LeafIterRBIteration30.ply";
 	savePLYFile(ss8.str(), *cloudFilteredFarbig, true);
 }
