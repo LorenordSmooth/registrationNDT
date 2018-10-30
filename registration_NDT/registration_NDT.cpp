@@ -57,13 +57,13 @@ bool IterativeClosestPoints = true;
 bool LeafnodeIterator = true;
 bool registrierungFertig = false;
 
-int ladeClouds(int argc, char** argv, vector<PointCloud<PointL>::Ptr, 
+int ladeClouds(int argc, char** argv, vector<PointCloud<PointL>::Ptr,
 	Eigen::aligned_allocator<PointCloud<PointL>::Ptr>> &sourceClouds)
 {
 	// Einlesen der Dateinamen der 5 Punktewolken
 	vector<int> filenames;
 	filenames = console::parse_file_extension_argument(argc, argv, ".ply");
-	
+
 	// Lade die clouds in einen cloud-vektor
 	for (int i = 0; i < filenames.size(); ++i)
 	{
@@ -78,7 +78,7 @@ int ladeClouds(int argc, char** argv, vector<PointCloud<PointL>::Ptr,
 	}
 }
 
-void registerNDT(const PointCloud<PointL>::Ptr cloud_src, const PointCloud<PointL>::Ptr cloud_tgt, 
+void registerNDT(const PointCloud<PointL>::Ptr cloud_src, const PointCloud<PointL>::Ptr cloud_tgt,
 	PointCloud<PointL>::Ptr output)
 {
 	//PointCloud<PointL>::Ptr output(new PointCloud<PointL>);
@@ -133,13 +133,12 @@ void registerNDT(const PointCloud<PointL>::Ptr cloud_src, const PointCloud<Point
 	*output += *cloud_src;
 }
 
-void initialTransformMatrixCompute(PointCloud<FPFHSignature33>::Ptr feat_src, 
+void initialTransformMatrixCompute(PointCloud<FPFHSignature33>::Ptr feat_src,
 	boost::shared_ptr<const PointCloud<PointL>> key_src, PointCloud<FPFHSignature33>::Ptr feat_tgt,
 	boost::shared_ptr<const PointCloud<PointL>> key_tgt, Eigen::Matrix4f transform)
 {
 	/*CorrespondencesPtr correspondences(new Correspondences);
 	registration::CorrespondenceEstimation<FPFHSignature33, FPFHSignature33> cest;
-
 	cest.setInputSource(feat_src);
 	cest.setInputTarget(feat_tgt);
 	cest.determineCorrespondences(*correspondences);
@@ -156,7 +155,7 @@ void initialTransformMatrixCompute(PointCloud<FPFHSignature33>::Ptr feat_src,
 	trans_est.estimateRigidTransformation(key_src, key_tgt, corr_filtered, transform);*/
 }
 
-void keypointAndDescriptorCompute(const PointCloud<PointL>::Ptr cloud, PointCloud<FPFHSignature33>::Ptr features, 
+void keypointAndDescriptorCompute(const PointCloud<PointL>::Ptr cloud, PointCloud<FPFHSignature33>::Ptr features,
 	boost::shared_ptr<vector<int>> keypoints)
 {
 	// erstmal normals berechnen kk ty
@@ -191,7 +190,7 @@ void keypointAndDescriptorCompute(const PointCloud<PointL>::Ptr cloud, PointClou
 	//fper.determinePersistentFeatures(*features, keypoints);
 }
 
-void initialTransformCrude(const PointCloud<PointL>::Ptr cloud_src, const PointCloud<PointL>::Ptr cloud_tgt, 
+void initialTransformCrude(const PointCloud<PointL>::Ptr cloud_src, const PointCloud<PointL>::Ptr cloud_tgt,
 	Eigen::Matrix4f &finalTransform, CorrespondencesPtr &corresps_filtered)
 {
 	// better transform initial saved here
@@ -220,10 +219,10 @@ void initialTransformCrude(const PointCloud<PointL>::Ptr cloud_src, const PointC
 	cout << "transform: " << transformInitial << endl;
 }
 
-void registerICP2(const PointCloud<PointL>::Ptr cloud_src, const PointCloud<PointL>::Ptr cloud_tgt, 
+void registerICP2(const PointCloud<PointL>::Ptr cloud_src, const PointCloud<PointL>::Ptr cloud_tgt,
 	const Eigen::Matrix4f transformInitial,
-	const CorrespondencesPtr corresps_filtered ,PointCloud<PointL>::Ptr output)
-{	
+	const CorrespondencesPtr corresps_filtered, PointCloud<PointL>::Ptr output)
+{
 	PointCloud<PointL>::Ptr src(new PointCloud<PointL>);
 	PointCloud<PointL>::Ptr tgt(new PointCloud<PointL>);
 
@@ -247,7 +246,7 @@ void registerICP2(const PointCloud<PointL>::Ptr cloud_src, const PointCloud<Poin
 
 	// der konstruktor kriegt die per reference geschickt, heißt das die werden zwischen durch updated? (muss ja eigl..)
 	registration::DefaultConvergenceCriteria<float> conv_crit(iterations, transformInitial, *corresps_filtered);
-	
+
 	conv_crit.setMaximumIterations(30);
 	conv_crit.setMaximumIterationsSimilarTransforms(3);
 	conv_crit.setTranslationThreshold(5e-3);
@@ -360,11 +359,11 @@ void registerICP(const PointCloud<PointL>::Ptr cloud_src, const PointCloud<Point
 		*output += *cloud_src;
 
 		/*if (i = 5 || 10 || 20) {
-			std::stringstream ss;
-			ss << "registrationTry" << i << ".ply";
-			savePLYFile(ss.str(), *output, true);
+		std::stringstream ss;
+		ss << "registrationTry" << i << ".ply";
+		savePLYFile(ss.str(), *output, true);
 		}*/
-		
+
 	}
 
 	// Get the transformation from target to source
@@ -412,38 +411,38 @@ int main(int argc, char** argv)
 
 	// initialisiere die arbeits clouds (uebersichtlicher)
 	switch (anzahlClouds) {
-		case 1: {
-			*cloud1 = *clouds[0];
-			// wenn wir nur eine Cloud laden, ist dies die bereits fertig registrierte
-			registrierungFertig = true;
-			break;
-		}
-		case 2: {
-			*cloud1 = *clouds[0];
-			*cloud2 = *clouds[1];
-			break;
-		}
-		case 3: {
-			*cloud1 = *clouds[0];
-			*cloud2 = *clouds[1];
-			*cloud3 = *clouds[2];
-			break;
-		}
-		case 4: {
-			*cloud1 = *clouds[0];
-			*cloud2 = *clouds[1];
-			*cloud3 = *clouds[2];
-			*cloud4 = *clouds[3];
-			break;
-		}
-		case 5: {
-			*cloud1 = *clouds[0];
-			*cloud2 = *clouds[1];
-			*cloud3 = *clouds[2];
-			*cloud4 = *clouds[3];
-			*cloud5 = *clouds[4];
-			break;
-		}
+	case 1: {
+		*cloud1 = *clouds[0];
+		// wenn wir nur eine Cloud laden, ist dies die bereits fertig registrierte
+		registrierungFertig = true;
+		break;
+	}
+	case 2: {
+		*cloud1 = *clouds[0];
+		*cloud2 = *clouds[1];
+		break;
+	}
+	case 3: {
+		*cloud1 = *clouds[0];
+		*cloud2 = *clouds[1];
+		*cloud3 = *clouds[2];
+		break;
+	}
+	case 4: {
+		*cloud1 = *clouds[0];
+		*cloud2 = *clouds[1];
+		*cloud3 = *clouds[2];
+		*cloud4 = *clouds[3];
+		break;
+	}
+	case 5: {
+		*cloud1 = *clouds[0];
+		*cloud2 = *clouds[1];
+		*cloud3 = *clouds[2];
+		*cloud4 = *clouds[3];
+		*cloud5 = *clouds[4];
+		break;
+	}
 	}
 
 	// wenn registrierungFertig true, ueberspringe das Labeln und die RegistrierungsMethoden, direkt zu LeafIter
@@ -610,7 +609,6 @@ int main(int argc, char** argv)
 			// eingabe: uno cloud, ausgabe: features&keypoints hell yeah
 			/*keypointAndDescriptorCompute(cloudLabel1, features1, keypoints1);
 			keypointAndDescriptorCompute(cloudLabel2, features2, keypoints2);
-
 			initialTransformMatrixCompute(features1, keypoints1, features2, keypoints2, transformInitial);*/
 
 			Eigen::Matrix4f startTransform;
@@ -657,10 +655,10 @@ int main(int argc, char** argv)
 		}
 
 		/* Legende: Cloud 1 rot
-					Cloud 2 gruen
-					Cloud 3 blau
-					Cloud 4 gelb
-					Cloud 5 lila */
+		Cloud 2 gruen
+		Cloud 3 blau
+		Cloud 4 gelb
+		Cloud 5 lila */
 
 		//uint8_t r1 = 255, g1 = 0, b1 = 0;
 		//uint32_t rgb1 = ((uint32_t)r1 << 16 | (uint32_t)g1 << 8 | (uint32_t)b1);
@@ -720,30 +718,29 @@ int main(int argc, char** argv)
 		uint32_t rgb4 = ((uint32_t)r4 << 16 | (uint32_t)g4 << 8 | (uint32_t)b4);
 		uint8_t r5 = 255, g5 = 0, b5 = 255;
 		uint32_t rgb5 = ((uint32_t)r5 << 16 | (uint32_t)g5 << 8 | (uint32_t)b5);
-
 		for (size_t i = 0; i < result1234->points.size(); ++i) {
-			switch (result1234->points[i].label) {
-			case 1: {
-				result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb1);
-				break;
-			}
-			case 2: {
-				result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb2);
-				break;
-			}
-			case 3: {
-				result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb3);
-				break;
-			}
-			case 4: {
-				result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb4);
-				break;
-			}
-			case 5: {
-				result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb5);
-				break;
-			}
-			}
+		switch (result1234->points[i].label) {
+		case 1: {
+		result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb1);
+		break;
+		}
+		case 2: {
+		result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb2);
+		break;
+		}
+		case 3: {
+		result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb3);
+		break;
+		}
+		case 4: {
+		result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb4);
+		break;
+		}
+		case 5: {
+		result1234->points[i].rgb = *reinterpret_cast<float*>(&rgb5);
+		break;
+		}
+		}
 		}*/
 
 	}
@@ -801,13 +798,9 @@ int main(int argc, char** argv)
 
 		// Vector speichert Indizes von Punkten im aktuellen Leafnode
 		vector<int> indexVector;
-		// besser wieder array von vectoren obv (later, feinarbeit)
-		vector<int> indexVectorCloud1;
-		vector<int> indexVectorCloud2;
-		vector<int> indexVectorCloud3;
-		vector<int> indexVectorCloud4;
-		vector<int> indexVectorCloud5;
-		// Aus jedem Leafnode werden die relevanten Nodes in gesamtIndices gespeichert
+		// Array von Vektoren, speichert in Vektor1-5 jeweils Punkte mit Label1-5 aus Wolke1-5 
+		vector<int> indexVectorClouds[5];
+		// Aus jedem Leafnode werden die "relevanten" Nodes in gesamtIndices gespeichert
 		vector<int> gesamtIndices;
 
 		// Iteriere ueber alle Leafnodes
@@ -822,76 +815,35 @@ int main(int argc, char** argv)
 			for (size_t i = 0; i < indexVector.size(); ++i)
 			{
 				// bessere implementierung (schoener): array[0] = counterCloud1 bis array[4] = counterCloud4, dann schleife ueber array.size
-				int counterCloud1 = 0;
-				int counterCloud2 = 0;
-				int counterCloud3 = 0;
-				int counterCloud4 = 0;
-				int counterCloud5 = 0;
+				vector<int> counterClouds = { 0,0,0,0,0 };
 
-				if (cloudMergedFarbig->points[indexVector[i]].label == 1) {
-					counterCloud1++;
-					// jeden index aus Cloud1 in indexVectorCloud1 hinzufuegen
-					indexVectorCloud1.push_back(indexVector[i]);
-				}
-				else if (cloudMergedFarbig->points[indexVector[i]].label == 2) {
-					counterCloud2++;
-					// jeden index aus Cloud1 in indexVectorCloud1 hinzufuegen
-					indexVectorCloud2.push_back(indexVector[i]);
-				}
-				else if (cloudMergedFarbig->points[indexVector[i]].label == 3) {
-					counterCloud3++;
-					// jeden index aus Cloud1 in indexVectorCloud1 hinzufuegen
-					indexVectorCloud3.push_back(indexVector[i]);
-				}
-				else if (cloudMergedFarbig->points[indexVector[i]].label == 4) {
-					counterCloud4++;
-					// jeden index aus Cloud1 in indexVectorCloud1 hinzufuegen
-					indexVectorCloud4.push_back(indexVector[i]);
-				}
-				else {
-					counterCloud5++;
-					// analog fuer Cloud2
-					indexVectorCloud5.push_back(indexVector[i]);
-				}
+				// Gehe fuer aktuellen Leafnode alle Punkte durch, erhoehe counter1-5 fuer jeden Punkt aus Wolke 1-5,
+				// speichere Punkt in indexVectorClouds1-5
+				for (int j = 0; j < counterClouds.size(); ++j) {
+					if (cloudMergedFarbig->points[indexVector[i]].label == j+1) {
+						counterClouds[j]++;
+						// jeden index aus Cloud j in indexVectorClouds[j] hinzufuegen
+						indexVectorClouds[j].push_back(indexVector[i]);
+					}
+				}	
 			}
 
 			// fuege neue Punkte hinten an
-			int temp = gesamtIndices.size();
-
 			// die Cloud mit der hoechsten Menge an Punkten soll die Punkte "stellen"
-			int maxIndexSize = max({indexVectorCloud1.size(),indexVectorCloud2.size(),indexVectorCloud3.size(),indexVectorCloud4.size(),indexVectorCloud5.size()});
+			int maxIndexSize = max({ indexVectorClouds[0].size(),indexVectorClouds[1].size(),indexVectorClouds[2].size(),indexVectorClouds[3].size(),indexVectorClouds[4].size() });
 
 			// (unschoen) finde heraus zu welcher cloud maxIndexSize gehoert, fuege alle diese Punkte zum relevanten Punkte Pool hinzu
-			if (maxIndexSize == indexVectorCloud1.size()) {
-				for (int i = 0; i < indexVectorCloud1.size(); ++i) {
-					gesamtIndices.push_back(indexVectorCloud1[i]);
-				}
-			}	
-			else if (maxIndexSize == indexVectorCloud2.size()) {
-				for (int i = 0; i < indexVectorCloud2.size(); ++i) {
-					gesamtIndices.push_back(indexVectorCloud2[i]);
+			for (int j = 0; j < 5; ++j) {
+				if (maxIndexSize == indexVectorClouds[j].size()) {
+					for (int i = 0; i < indexVectorClouds[j].size(); ++i) {
+						gesamtIndices.push_back(indexVectorClouds[j][i]);
+					}
 				}
 			}
-			else if (maxIndexSize == indexVectorCloud3.size()) {
-				for (int i = 0; i < indexVectorCloud3.size(); ++i) {
-					gesamtIndices.push_back(indexVectorCloud3[i]);
-				}
-			}
-			else if (maxIndexSize == indexVectorCloud4.size()) {
-				for (int i = 0; i < indexVectorCloud4.size(); ++i) {
-					gesamtIndices.push_back(indexVectorCloud4[i]);
-				}
-			}
-			else {
-				for (int i = 0; i < indexVectorCloud5.size(); ++i) {
-					gesamtIndices.push_back(indexVectorCloud5[i]);
-				}
-			}
-			indexVectorCloud1.clear();
-			indexVectorCloud2.clear();
-			indexVectorCloud3.clear();
-			indexVectorCloud4.clear();
-			indexVectorCloud5.clear();
+			
+			// Am Ende einer LeafNode Iteration indexVectorCloud1-5 clearen
+			for (int j = 0; j < 5; ++j) { indexVectorClouds[j].clear(); }
+				
 		}
 
 		// gesamtIndices erhaelt nun die gefilterte cloudMergedFarbig, diese Indices gilt es nun wieder in eine Cloud zu ueberfuehren
@@ -906,10 +858,10 @@ int main(int argc, char** argv)
 	savePLYFile(ss7.str(), *cloudFilteredFarbig, true);
 
 	/* Legende: Cloud 1 rot
-				Cloud 2 gruen
-				Cloud 3 blau
-				Cloud 4 gelb
-				Cloud 5 lila */
+	Cloud 2 gruen
+	Cloud 3 blau
+	Cloud 4 gelb
+	Cloud 5 lila */
 
 	uint8_t r1 = 255, g1 = 0, b1 = 0;
 	uint32_t rgb1 = ((uint32_t)r1 << 16 | (uint32_t)g1 << 8 | (uint32_t)b1);
@@ -921,7 +873,7 @@ int main(int argc, char** argv)
 	uint32_t rgb4 = ((uint32_t)r4 << 16 | (uint32_t)g4 << 8 | (uint32_t)b4);
 	uint8_t r5 = 255, g5 = 0, b5 = 255;
 	uint32_t rgb5 = ((uint32_t)r5 << 16 | (uint32_t)g5 << 8 | (uint32_t)b5);
-	
+
 	for (size_t i = 0; i < cloudFilteredFarbig->points.size(); ++i) {
 		switch (cloudFilteredFarbig->points[i].label) {
 		case 1: {
