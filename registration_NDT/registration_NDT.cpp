@@ -50,13 +50,12 @@ typedef typename pcl::Feature<PointL, FPFHSignature33>::Ptr FeatureEstimatorPtr;
 typedef boost::shared_ptr<const pcl::PointRepresentation <FPFHSignature33> > FeatureRepresentationConstPtr;
 
 // globals
-bool labelVorhanden = true;
 int anzahlClouds;
-int anzahlIterationen = 30;
+int anzahlIterationen = 1;
 bool NormalDistributionTrans = false;
 bool IterativeClosestPoints = true;
 bool LeafnodeIterator = true;
-bool registrierungFertig = true;
+bool registrierungFertig = false;
 
 int ladeClouds(int argc, char** argv, vector<PointCloud<PointL>::Ptr, 
 	Eigen::aligned_allocator<PointCloud<PointL>::Ptr>> &sourceClouds)
@@ -447,32 +446,6 @@ int main(int argc, char** argv)
 		}
 	}
 
-	vector<int> counter = { 0, 0, 0, 0 };
-
-	for (auto &p2 : cloud1->points) {
-		if (p2.label == 1)
-		{
-			counter[0] += 1;
-		}
-		if (p2.label == 2)
-		{
-			counter[1] += 1;
-		}
-		if (p2.label == 3)
-		{
-			counter[2] += 1;
-		}
-		if (p2.label == 4)
-		{
-			counter[3] += 1;
-		}
-	}
-	cout << " label1: " << counter[0] << endl;
-	cout << " label2: " << counter[1] << endl;
-	cout << " label3: " << counter[2] << endl;
-	cout << " label4: " << counter[3] << endl;
-	cout << "         break           " << endl;
-
 	// wenn registrierungFertig true, ueberspringe das Labeln und die RegistrierungsMethoden, direkt zu LeafIter
 	if (!registrierungFertig)
 	{
@@ -516,6 +489,111 @@ int main(int argc, char** argv)
 			p5.label = label5;
 		}
 		cout << "nach pointcloud label shiet" << endl;
+
+		vector<int> counter = { 0, 0, 0, 0 };
+
+		for (auto &p2 : cloudLabel1->points) {
+			if (p2.label == 1)
+			{
+				counter[0] += 1;
+			}
+			if (p2.label == 2)
+			{
+				counter[1] += 1;
+			}
+			if (p2.label == 3)
+			{
+				counter[2] += 1;
+			}
+			if (p2.label == 4)
+			{
+				counter[3] += 1;
+			}
+		}
+
+		cout << " Nr1label1: " << counter[0] << endl;
+		cout << " label2: " << counter[1] << endl;
+		cout << " label3: " << counter[2] << endl;
+		cout << " label4: " << counter[3] << endl;
+		cout << "         break           " << endl;
+
+		counter = { 0, 0, 0, 0 };
+
+		for (auto &p2 : cloudLabel2->points) {
+			if (p2.label == 1)
+			{
+				counter[0] += 1;
+			}
+			if (p2.label == 2)
+			{
+				counter[1] += 1;
+			}
+			if (p2.label == 3)
+			{
+				counter[2] += 1;
+			}
+			if (p2.label == 4)
+			{
+				counter[3] += 1;
+			}
+		}
+		cout << " label1: " << counter[0] << endl;
+		cout << " label2: " << counter[1] << endl;
+		cout << " label3: " << counter[2] << endl;
+		cout << " label4: " << counter[3] << endl;
+		cout << "         break           " << endl;
+
+		counter = { 0, 0, 0, 0 };
+
+		for (auto &p2 : cloudLabel3->points) {
+			if (p2.label == 1)
+			{
+				counter[0] += 1;
+			}
+			if (p2.label == 2)
+			{
+				counter[1] += 1;
+			}
+			if (p2.label == 3)
+			{
+				counter[2] += 1;
+			}
+			if (p2.label == 4)
+			{
+				counter[3] += 1;
+			}
+		}
+		cout << " label1: " << counter[0] << endl;
+		cout << " label2: " << counter[1] << endl;
+		cout << " label3: " << counter[2] << endl;
+		cout << " label4: " << counter[3] << endl;
+		cout << "         break           " << endl;
+
+		counter = { 0, 0, 0, 0 };
+
+		for (auto &p2 : cloudLabel4->points) {
+			if (p2.label == 1)
+			{
+				counter[0] += 1;
+			}
+			if (p2.label == 2)
+			{
+				counter[1] += 1;
+			}
+			if (p2.label == 3)
+			{
+				counter[2] += 1;
+			}
+			if (p2.label == 4)
+			{
+				counter[3] += 1;
+			}
+		}
+		cout << " label1: " << counter[0] << endl;
+		cout << " label2: " << counter[1] << endl;
+		cout << " label3: " << counter[2] << endl;
+		cout << " label4: " << counter[3] << endl;
+		cout << "         breakFirstTime           " << endl;
 
 		// rufe registrierung per ICP auf
 		if (IterativeClosestPoints)
@@ -670,6 +748,32 @@ int main(int argc, char** argv)
 
 	}
 
+	vector<int> counter3 = { 0, 0, 0, 0 };
+
+	for (auto &p2 : result1234->points) {
+		if (p2.label == 1)
+		{
+			counter3[0] += 1;
+		}
+		if (p2.label == 2)
+		{
+			counter3[1] += 1;
+		}
+		if (p2.label == 3)
+		{
+			counter3[2] += 1;
+		}
+		if (p2.label == 4)
+		{
+			counter3[3] += 1;
+		}
+	}
+	cout << " Nr2label1: " << counter3[0] << endl;
+	cout << " label2: " << counter3[1] << endl;
+	cout << " label3: " << counter3[2] << endl;
+	cout << " label4: " << counter3[3] << endl;
+	cout << "         break           " << endl;
+
 	PointCloud<PointXYZRGBL>::Ptr cloudMergedFarbig(new PointCloud<PointXYZRGBL>());
 	PointCloud<PointXYZRGBL>::Ptr cloudMergedRotBlau(new PointCloud<PointXYZRGBL>());
 	PointCloud<PointXYZRGBL>::Ptr cloudFilteredFarbig(new PointCloud<PointXYZRGBL>());
@@ -797,9 +901,9 @@ int main(int argc, char** argv)
 	}
 
 	// Registrierte Cloud nach LeafIteration Filter
-	/*std::stringstream ss7;
-	ss7 << "registration1234LeafIter.ply";
-	savePLYFile(ss7.str(), *cloudFilteredFarbig, true);*/
+	std::stringstream ss7;
+	ss7 << "LabelTestFarbig.ply";
+	savePLYFile(ss7.str(), *cloudFilteredFarbig, true);
 
 	/* Legende: Cloud 1 rot
 				Cloud 2 gruen
@@ -843,8 +947,34 @@ int main(int argc, char** argv)
 		}
 	}
 
+	vector<int> counter2 = { 0, 0, 0, 0 };
+
+	for (auto &p2 : cloudFilteredFarbig->points) {
+		if (p2.label == 1)
+		{
+			counter2[0] += 1;
+		}
+		if (p2.label == 2)
+		{
+			counter2[1] += 1;
+		}
+		if (p2.label == 3)
+		{
+			counter2[2] += 1;
+		}
+		if (p2.label == 4)
+		{
+			counter2[3] += 1;
+		}
+	}
+	cout << " Nr3label1: " << counter2[0] << endl;
+	cout << " label2: " << counter2[1] << endl;
+	cout << " label3: " << counter2[2] << endl;
+	cout << " label4: " << counter2[3] << endl;
+	cout << "         break           " << endl;
+
 	// Registrierte Cloud nach LeafIteration Filter in RotBlauGruenGelb Darstellung
 	std::stringstream ss8;
-	ss8 << "1234LeafIterRBIteration30.ply";
+	ss8 << "LabelTestRB.ply";
 	savePLYFile(ss8.str(), *cloudFilteredFarbig, true);
 }
